@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model FacultyApplication {
+  id                  String      @id @default(cuid())
+  fullName            String
+  gender              String
+  dateOfBirth         DateTime
+  age                 String
+  email               String      @unique
+  phone               String
+  position            String
+  applicationType     String
+
+  profilePictureKey   String?     
+  resumeKey           String?     
+
+  // Education
+  btechCGPA           String
+  tenthSchoolName     String
+  tenthPlace          String
+  tenthTimeline       String
+  tenthPercentage     String
+  interCollegeName    String
+  interPlace          String
+  interTimeline       String
+  interPercentage     String
+
+  // Postgraduate Information
+  mtechYearOfJoining      String
+  mtechYearOfGraduation   String
+  mtechDesignation        String
+  otherPGDegree           String
+  otherPGYearOfJoining    String
+  otherPGYearOfPassing    String
+  otherPGDesignation      String
+
+  // Experience
+  hasExperience       Boolean
+  experiences         Experience[]
+
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  accepted            Boolean     @default(false)
+}
+
+model Experience {
+  id            String             @id @default(cuid())
+  designation   String
+  institution   String
+  place         String
+  fromDate      String
+  toDate        String
+
+  facultyId     String
+  faculty       FacultyApplication @relation(fields: [facultyId], references: [id])
+}
