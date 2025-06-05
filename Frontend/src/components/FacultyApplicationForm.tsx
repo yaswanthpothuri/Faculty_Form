@@ -25,7 +25,6 @@ type FormData = {
   profilePicturePreview: string;
   resume: File | null;
   
-  // Academic fields
   btechCGPA: string;
   tenthSchoolName: string;
   tenthPlace: string;
@@ -35,7 +34,7 @@ type FormData = {
   interPlace: string;
   interTimeline: string;
   interPercentage: string;
-  
+
   mtechYearOfJoining: string;
   mtechYearOfGraduation: string;
   mtechDesignation: string;
@@ -43,7 +42,7 @@ type FormData = {
   otherPGYearOfJoining: string;
   otherPGYearOfPassing: string;
   otherPGDesignation: string;
-  
+
   hasExperience: boolean;
   experiences: Array<{
     designation: string;
@@ -58,7 +57,6 @@ export const FacultyApplicationForm: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [applicationId, setApplicationId] = useState<string | null>(null);
 
   const methods = useForm<FormData>({
     defaultValues: {
@@ -73,7 +71,7 @@ export const FacultyApplicationForm: React.FC = () => {
       profilePicture: null,
       profilePicturePreview: '',
       resume: null,
-      
+
       btechCGPA: '',
       tenthSchoolName: '',
       tenthPlace: '',
@@ -83,7 +81,7 @@ export const FacultyApplicationForm: React.FC = () => {
       interPlace: '',
       interTimeline: '',
       interPercentage: '',
-      
+
       mtechYearOfJoining: '',
       mtechYearOfGraduation: '',
       mtechDesignation: '',
@@ -91,7 +89,7 @@ export const FacultyApplicationForm: React.FC = () => {
       otherPGYearOfJoining: '',
       otherPGYearOfPassing: '',
       otherPGDesignation: '',
-      
+
       hasExperience: false,
       experiences: [{
         designation: '',
@@ -116,46 +114,14 @@ export const FacultyApplicationForm: React.FC = () => {
     const isValid = await methods.trigger();
     if (!isValid) return;
 
-    // Step 3: Academic Experience (4th page) - Send form data
-    if (activeStep === 3 && !applicationId) {
-      setIsSubmitting(true);
-
-      try {
-        const { profilePicture, resume, profilePicturePreview, ...formData } = methods.getValues();
-
-        // Send all form fields except files to API
-        const response = await axios.post('http:localhost:3000/faculty-application/data', formData);
-        
-        // Store application ID for document upload
-        setApplicationId(response.data.id);
-        alert('Application data saved successfully!');
-        
-        // Move to next step
-        setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-      } catch (error) {
-        console.error('Failed to submit application:', error);
-        alert('Error submitting application. Please try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    } else {
-      // For all other steps, just move to next step
-      setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-    }
-    
+    setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
     window.scrollTo(0, 0);
   };
 
   const handleBack = () => setActiveStep((prev) => Math.max(prev - 1, 0));
 
   const onSubmit = async (data: FormData) => {
-    // Step 4: Document Uploads (5th page) - Send media files
-    if (activeStep === 4) {
-      if (!applicationId) {
-        alert('Please complete the Academic Experience step first.');
-        return;
-      }
-
+    if (activeStep === 5) {
       if (!data.profilePicture || !data.resume) {
         alert('Please upload both profile picture and resume before proceeding.');
         return;
@@ -164,46 +130,36 @@ export const FacultyApplicationForm: React.FC = () => {
       setIsSubmitting(true);
 
       try {
-        const formData = new FormData();
-        formData.append('profilePicture', data.profilePicture);
-        formData.append('resume', data.resume);
-        formData.append('applicationId', applicationId);
+        const { profilePicture, resume, profilePicturePreview, experiences, ...textFields } = methods.getValues();
+const formData = new FormData();
 
-        await axios.post('http:localhost:3000/faculty-application/media/:applicationId', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
+// Append all text fields
+Object.entries(textFields).forEach(([key, value]) => {
+  formData.append(key, value as any);
+});
 
-        alert('Documents uploaded successfully!');
-        
-        // Move to summary page
-        setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
-        window.scrollTo(0, 0);
+formData.append('profilePicture', profilePicture);
+formData.append('resume', resume);
+// ✅ Ensure experiences is stringified
+// formData.append('experiences', JSON.stringify(experiences));
+
+// Append files
+
+await axios.post('http://localhost:3000/faculty-application/full-submit', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
+
+alert('Application submitted successfully!');
+setIsSubmitted(true);
+setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
+window.scrollTo(0, 0);
+
       } catch (error) {
-        console.error('Error uploading documents:', error);
-        alert('Failed to upload documents. Please try again.');
+        console.error('Submission failed:', error);
+        alert('Error submitting application. Please try again.');
       } finally {
-        setIsSubmitting(false);
-      }
-    } 
-    // Step 5: Summary (6th page) - Final submission
-    else if (activeStep === 5) {
-      if (!applicationId) {
-        alert('Application not found. Please start over.');
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      try {
-        // Final submission confirmation
-        await axios.patch(`/api/application/${applicationId}/submit`);
-        
-        setIsSubmitted(true);
-      } catch (error) {
-        console.error('Error finalizing application:', error);
-        alert('Failed to finalize application. Please try again.');
         setIsSubmitting(false);
       }
     }
@@ -211,7 +167,6 @@ export const FacultyApplicationForm: React.FC = () => {
 
   const ActiveStepComponent = steps[activeStep].component;
 
-  // Success screen
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -223,37 +178,11 @@ export const FacultyApplicationForm: React.FC = () => {
           <p className="text-gray-600 mb-4">
             Thank you for your application. We will review it and get back to you soon.
           </p>
-          {applicationId && (
-            <p className="text-sm text-gray-500">
-              Application ID: {applicationId}
-            </p>
-          )}
         </div>
       </div>
     );
   }
 
-  const handleFinalSubmit = async (event: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
-    event.preventDefault();
-
-    if (!applicationId) {
-      alert('Application not found. Please start over.');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Final submission confirmation
-      await axios.patch(`/api/application/${applicationId}/submit`);
-
-      setIsSubmitted(true);
-    } catch (error) {
-      console.error('Error finalizing application:', error);
-      alert('Failed to finalize application. Please try again.');
-      setIsSubmitting(false);
-    }
-  };
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
@@ -268,7 +197,7 @@ export const FacultyApplicationForm: React.FC = () => {
               <h2 className="text-2xl font-semibold mb-6 text-gray-800">
                 {steps[activeStep].name}
               </h2>
-              
+
               <ActiveStepComponent />
 
               <div className="mt-8 flex justify-between items-center pt-6 border-t">
@@ -282,9 +211,25 @@ export const FacultyApplicationForm: React.FC = () => {
                     Back
                   </button>
                 )}
-                
+
                 <div className="ml-auto">
-                  {activeStep < steps.length - 1 ? (
+                  {activeStep === 5 ? (
+                    <button
+                      type="button"
+                      onClick={methods.handleSubmit(onSubmit)}
+                      disabled={isSubmitting}
+                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Application'
+                      )}
+                    </button>
+                  ) : (
                     <button
                       type="button"
                       onClick={handleNext}
@@ -301,22 +246,6 @@ export const FacultyApplicationForm: React.FC = () => {
                           Next
                           <ChevronRight className="h-4 w-4" />
                         </>
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleFinalSubmit}
-                      disabled={isSubmitting}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2 inline-block"></div>
-                          Submitting...
-                        </>
-                      ) : (
-                        'Submit Application'
                       )}
                     </button>
                   )}
