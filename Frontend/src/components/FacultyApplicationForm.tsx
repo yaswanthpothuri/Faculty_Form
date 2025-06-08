@@ -11,6 +11,7 @@ import { DocumentUploads } from './sections/DocumentUploads';
 import { ProgressBar } from './ui/ProgressBar';
 import { PostgraduateInformation } from './sections/PostgraduateInformation';
 import { FormSummary } from './sections/FormSummary';
+import Loader from './ui/SubmitAnimation';
 
 type FormData = {
   fullName: string;
@@ -141,7 +142,7 @@ Object.entries(textFields).forEach(([key, value]) => {
 formData.append('profilePicture', profilePicture);
 formData.append('resume', resume);
 // ✅ Ensure experiences is stringified
-// formData.append('experiences', JSON.stringify(experiences));
+formData.append('experiences', JSON.stringify(experiences));
 
 // Append files
 
@@ -169,17 +170,20 @@ window.scrollTo(0, 0);
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="bg-white p-10 rounded-lg shadow-lg text-center max-w-md">
-          <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Application Submitted Successfully!
-          </h2>
-          <p className="text-gray-600 mb-4">
-            Thank you for your application. We will review it and get back to you soon.
-          </p>
-        </div>
-      </div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-gray-100 px-4">
+  <div className="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border border-gray-200">
+    <div className="flex items-center justify-center bg-green-100 rounded-full w-20 h-20 mx-auto mb-6">
+      <CheckCircle className="h-12 w-12 text-green-600" />
+    </div>
+    <h2 className="text-3xl font-extrabold text-gray-900 mb-3">
+      Submission Successful!
+    </h2>
+    <p className="text-gray-600 text-md mb-6">
+      Thank you for your application. Our team will review it and contact you shortly.
+    </p>
+  </div>
+</div>
+
     );
   }
 
@@ -214,21 +218,41 @@ window.scrollTo(0, 0);
 
                 <div className="ml-auto">
                   {activeStep === 5 ? (
-                    <button
-                      type="button"
-                      onClick={methods.handleSubmit(onSubmit)}
-                      disabled={isSubmitting}
-                      className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                          Submitting...
-                        </>
-                      ) : (
-                        'Submit Application'
-                      )}
-                    </button>
+                    // <button
+                    //   type="button"
+                    //   onClick={methods.handleSubmit(onSubmit)}
+                    //   disabled={isSubmitting}
+                    //   className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    // >
+                    //   {isSubmitting ? (
+                    //     <>
+                    //       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    //       Submitting...
+                    //     </>
+                    //   ) : (
+                    //     'Submit Application'
+                    //   )}
+                    // </button>
+                    <>
+  {/* Submit Button */}
+  <button
+    type="button"
+    onClick={methods.handleSubmit(onSubmit)}
+    disabled={isSubmitting}
+    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    Submit Application
+  </button>
+
+  {/* Full-screen Loader */}
+  {isSubmitting && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-10 backdrop-blur-sm">
+      <div className="flex flex-col items-center space-y-4">
+        <Loader />
+      </div>
+    </div>
+  )}
+</>
                   ) : (
                     <button
                       type="button"

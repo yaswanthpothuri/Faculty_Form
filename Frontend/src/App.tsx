@@ -1,5 +1,6 @@
 import React from 'react';
 import { FacultyApplicationForm } from './components/FacultyApplicationForm';
+import FacultyAdminDashboard from './components/dashboard';
 
 function App() {
   return (
@@ -7,7 +8,7 @@ function App() {
       <div className="max-w-4xl mx-auto">
         <header className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-            Faculty Application Form
+            Vignan University Faculty Application Form
           </h1>
           <p className="mt-2 text-lg text-gray-600">
             Complete the form below to apply for a faculty position
@@ -15,6 +16,7 @@ function App() {
         </header>
         <FacultyApplicationForm />
       </div>
+        <FacultyAdminDashboard />
     </div>
   );
 }

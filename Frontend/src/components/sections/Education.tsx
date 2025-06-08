@@ -15,7 +15,7 @@ export const Education: React.FC = () => {
             required
             min={0}
             max={10}
-            step={0.01}
+            // step={0.01}
           />
         </div>
       </div>

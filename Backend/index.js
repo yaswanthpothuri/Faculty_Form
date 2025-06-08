@@ -274,6 +274,254 @@ app.get('/userDetails', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch user details' });
   }
 });
+// Add these routes to your existing server.js file
+
+// ------------------------------------------ 
+// ✅ Route: Accept/Update application status
+// ------------------------------------------
+app.patch('/faculty-application/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Validate the application exists
+    const existingApplication = await prisma.facultyApplication.findUnique({
+      where: { id: id }
+    });
+
+    if (!existingApplication) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    // Update the application status
+    const updatedApplication = await prisma.facultyApplication.update({
+      where: { id: id },
+      data: { 
+        status: status ,
+        updatedAt: new Date()
+      }
+    });
+
+    res.status(200).json({
+      message: 'Application status updated successfully',
+      application: updatedApplication
+    });
+
+  } catch (error) {
+    console.error('Error updating application status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ------------------------------------------
+// ✅ Route: Get application statistics
+// ------------------------------------------
+app.get('/faculty-application/stats', async (req, res) => {
+  try {
+    const totalApplications = await prisma.facultyApplication.count();
+    const acceptedApplications = await prisma.facultyApplication.count({
+      where: { accepted: true }
+    });
+    const pendingApplications = totalApplications - acceptedApplications;
+
+    // Get applications by position
+    const positionStats = await prisma.facultyApplication.groupBy({
+      by: ['position'],
+      _count: {
+        id: true
+      }
+    });
+
+    // Get recent applications (last 30 days)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentApplications = await prisma.facultyApplication.count({
+      where: {
+        createdAt: {
+          gte: thirtyDaysAgo
+        }
+      }
+    });
+
+    res.status(200).json({
+      total: totalApplications,
+      accepted: acceptedApplications,
+      pending: pendingApplications,
+      recent: recentApplications,
+      byPosition: positionStats.map(stat => ({
+        position: stat.position,
+        count: stat._count.id
+      }))
+    });
+
+  } catch (error) {
+    console.error('Error fetching application statistics:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ------------------------------------------
+// ✅ Route: Search applications with filters
+// ------------------------------------------
+app.get('/faculty-application/search', async (req, res) => {
+  try {
+    const { 
+      search = '', 
+      status = 'all', 
+      position = 'all',
+      page = 1,
+      limit = 10 
+    } = req.query;
+
+    const pageNumber = parseInt(page);
+    const limitNumber = parseInt(limit);
+    const offset = (pageNumber - 1) * limitNumber;
+
+    // Build filter conditions
+    const whereConditions = {};
+
+    // Search in name, email, or position
+    if (search) {
+      whereConditions.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { position: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    // Filter by status
+    if (status !== 'all') {
+      whereConditions.accepted = status === 'accepted';
+    }
+
+    // Filter by position
+    if (position !== 'all') {
+      whereConditions.position = { contains: position, mode: 'insensitive' };
+    }
+
+    // Get total count for pagination
+    const totalCount = await prisma.facultyApplication.count({
+      where: whereConditions
+    });
+
+    // Get applications with pagination
+    const applications = await prisma.facultyApplication.findMany({
+      where: whereConditions,
+      include: {
+        experiences: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      skip: offset,
+      take: limitNumber
+    });
+
+    res.status(200).json({
+      applications,
+      pagination: {
+        page: pageNumber,
+        limit: limitNumber,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limitNumber)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error searching applications:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ------------------------------------------
+// ✅ Route: Delete application (optional)
+// ------------------------------------------
+app.delete('/faculty-application/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if application exists
+    const existingApplication = await prisma.facultyApplication.findUnique({
+      where: { id: id },
+      include: { experiences: true }
+    });
+
+    if (!existingApplication) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+
+    // Delete associated experiences first (if any)
+    await prisma.experience.deleteMany({
+      where: { facultyApplicationId: id }
+    });
+
+    // Delete the application
+    await prisma.facultyApplication.delete({
+      where: { id: id }
+    });
+
+    res.status(200).json({
+      message: 'Application deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ------------------------------------------
+// ✅ Route: Bulk operations (optional)
+// ------------------------------------------
+app.post('/faculty-application/bulk-action', async (req, res) => {
+  try {
+    const { action, applicationIds } = req.body;
+
+    if (!action || !applicationIds || !Array.isArray(applicationIds)) {
+      return res.status(400).json({ error: 'Invalid action or applicationIds' });
+    }
+
+    let result;
+
+    switch (action) {
+      case 'accept':
+        result = await prisma.facultyApplication.updateMany({
+          where: { id: { in: applicationIds } },
+          data: { accepted: true, updatedAt: new Date() }
+        });
+        break;
+      
+      case 'reject':
+        result = await prisma.facultyApplication.updateMany({
+          where: { id: { in: applicationIds } },
+          data: { accepted: false, updatedAt: new Date() }
+        });
+        break;
+      
+      case 'delete':
+        // First delete associated experiences
+        await prisma.experience.deleteMany({
+          where: { facultyApplicationId: { in: applicationIds } }
+        });
+        // Then delete applications
+        result = await prisma.facultyApplication.deleteMany({
+          where: { id: { in: applicationIds } }
+        });
+        break;
+      
+      default:
+        return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    res.status(200).json({
+      message: `Bulk ${action} completed successfully`,
+      affectedCount: result.count
+    });
+
+  } catch (error) {
+    console.error('Error performing bulk action:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 // ------------------------------------------
 // Start the server
 // ------------------------------------------
