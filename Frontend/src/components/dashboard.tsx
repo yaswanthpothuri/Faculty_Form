@@ -1,132 +1,155 @@
-
-import React, { useState, useEffect } from 'react';
-import { Search, Download, Eye, Calendar, Mail, Phone, MapPin, GraduationCap, Briefcase, X, Filter, Check, Clock, ChevronDown, Loader2, User, Award, XCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Download, UserIcon, Eye, Calendar, Mail, Phone, MapPin, GraduationCap, Briefcase, X, Filter, Check, Clock, ChevronDown, Loader2, User, Award, XCircle } from 'lucide-react';
 
 const FacultyAdminDashboard = () => {
-  const [applications, setApplications] = useState([]);
-  const [filteredApplications, setFilteredApplications] = useState([]);
-  const [selectedApplication, setSelectedApplication] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
+  
+interface Application {
+  id: string;
+  fullName: string;
+  email: string;
+  position: string;
+  status: string;
+  gender: string;
+  applicationType: string;
+  profilePictureKey?: string;
+  phone?: string;
+  age?: number;
+  dateOfBirth?: Date | string;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  tenthSchoolName?: string;
+  tenthPlace?: string;
+  tenthTimeline?: string;
+  tenthPercentage?: string;
+  interCollegeName?: string;
+  interPlace?: string;
+  interTimeline?: string;
+  interPercentage?: string;
+  ugCourse?: string;
+  ugCollegeName?: string;
+  ugBranch?: string;
+  ugPlace?: string;
+  ugTimeline?: string;
+  ugCgpa?: string;
+  mtechDesignation?: string;
+  mtechYearOfJoining?: string;
+  mtechYearOfGraduation?: string;
+  mtechCollege?: string;
+  mtechCgpa?: string;
+  otherPGDegree?: string;
+  otherpgcollege?: string;
+  otherPGDesignation?: string;
+  otherPGYearOfJoining?: string;
+  otherPGYearOfPassing?: string;
+  otherPGCgpa?: string;
+  hasExperience?: boolean;
+  experiences?: {
+    id?: string;
+    experiencetype?: string;
+    designation?: string;
+    institution?: string;
+    place?: string;
+    fromDate?: string;
+    toDate?: string;
+  }[];
+  resumeKey?: string;
+}
+
+const [applications, setApplications] = useState<Application[]>([]);
+const [selectedApplication, setSelectedApplication] = useState(null);
+const [isModalOpen, setIsModalOpen] = useState(false);
+const [searchTerm, setSearchTerm] = useState('');
+const [filters, setFilters] = useState({
+  status: 'all',
+  position: 'all',
+  gender: '',
+  type: ''
+});
+const [showFilters, setShowFilters] = useState(false);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
+
+// useMemo for filtered applications
+const filteredApplications = useMemo(() => {
+  if (!applications.length) return [];
+  
+  return applications.filter(app => {
+    const matchesSearch = app.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.position.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = filters.status === 'all' ||
+                         app.status.toLowerCase() === filters.status.toLowerCase();
+    
+    const matchesPosition = filters.position === 'all' ||
+                           app.position.toLowerCase().includes(filters.position.toLowerCase());
+    
+    const matchesGender = !filters.gender || (app.gender?.toLowerCase() ?? '') === filters.gender.toLowerCase();
+    const matchesType = !filters.type || (app.applicationType?.toLowerCase() ?? '') === filters.type.toLowerCase();
+                           
+    
+    return matchesSearch && matchesStatus && matchesPosition && matchesGender && matchesType;
+  });
+}, [applications, searchTerm, filters]);
+
+// Fetch applications from backend
+useEffect(() => {
+  fetchApplications();
+}, []);
+
+const fetchApplications = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    
+    const response = await fetch('http://localhost:3000/userDetails', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch applications: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Transform data to match component expectations
+    const transformedData = data.map(app => ({
+      ...app,
+      dateOfBirth: new Date(app.dateOfBirth),
+      createdAt: new Date(app.createdAt),
+      updatedAt: new Date(app.updatedAt),
+      status: app.status || 'Pending', // Default to Pending if no status
+      publicationsCount: app.experiences?.length || Math.floor(Math.random() * 20) + 5
+    }));
+    
+    setApplications(transformedData);
+  } catch (err) {
+    console.error('Error fetching applications:', err);
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleFilterChange = (filterType: keyof typeof filters, value: string) => {
+  setFilters(prev => ({
+    ...prev,
+    [filterType]: value
+  }));
+};
+
+const clearFilters = () => {
+  setFilters({
     status: 'all',
     position: 'all',
     gender: '',
     type: ''
   });
-  const [showFilters, setShowFilters] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Fetch applications from backend
-  useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await fetch('http://localhost:3000/userDetails', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch applications: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      
-      // Transform data to match component expectations
-      const transformedData = data.map(app => ({
-        ...app,
-        dateOfBirth: new Date(app.dateOfBirth),
-        createdAt: new Date(app.createdAt),
-        updatedAt: new Date(app.updatedAt),
-        status: app.status || 'Pending', // Default to Pending if no status
-        publicationsCount: app.experiences?.length || Math.floor(Math.random() * 20) + 5
-      }));
-      
-      setApplications(transformedData);
-      setFilteredApplications(transformedData);
-    } catch (err) {
-      console.error('Error fetching applications:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Debounce function for search
-  const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
-  };
-
-  // Debounced search
-  const debouncedSearch = debounce((searchValue, currentFilters) => {
-    applyFilters(searchValue, currentFilters);
-  }, 300);
-
-  // Apply filters and search
-  const applyFilters = (searchValue = searchTerm, currentFilters = filters) => {
-    let filtered = applications.filter(app => {
-      const matchesSearch = app.fullName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                           app.email.toLowerCase().includes(searchValue.toLowerCase()) ||
-                           app.position.toLowerCase().includes(searchValue.toLowerCase());
-      
-      const matchesStatus = currentFilters.status === 'all' || 
-                           app.status.toLowerCase() === currentFilters.status.toLowerCase();
-      
-      const matchesPosition = currentFilters.position === 'all' || 
-                             app.position.toLowerCase().includes(currentFilters.position.toLowerCase());
-      
-      const matchesGender = !currentFilters.gender || app.gender === currentFilters.gender;
-      
-      const matchesType = !currentFilters.type || app.applicationType === currentFilters.type;
-      
-      return matchesSearch && matchesStatus && matchesPosition && matchesGender && matchesType;
-    });
-    
-    setFilteredApplications(filtered);
-  };
-
-  // Handle search and filter changes
-  useEffect(() => {
-    debouncedSearch(searchTerm, filters);
-  }, [searchTerm]);
-
-  useEffect(() => {
-    applyFilters(searchTerm, filters);
-  }, [filters, applications]);
-
-  const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      status: 'all',
-      position: 'all',
-      gender: '',
-      type: ''
-    });
-    setSearchTerm('');
-  };
+  setSearchTerm('');
+};
 
   const handleCardClick = (application) => {
     setSelectedApplication(application);
@@ -202,7 +225,45 @@ const FacultyAdminDashboard = () => {
         };
     }
   };
-
+  const calculateExperience = (fromDateStr, toDateStr) => {
+    if (!fromDateStr) return { years: 0, months: 0 };
+    
+    const fromDate = new Date(fromDateStr);
+    const toDate = toDateStr ? new Date(toDateStr) : new Date(); // Use current date if no end date
+    
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return { years: 0, months: 0 };
+    }
+    
+    let years = toDate.getFullYear() - fromDate.getFullYear();
+    let months = toDate.getMonth() - fromDate.getMonth();
+    
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+    
+    return { years, months };
+  };
+  const formatExperience = (years, months) => {
+    if (years === 0 && months === 0) return 'Less than a month';
+    if (years === 0) return `${months} month${months > 1 ? 's' : ''}`;
+    if (months === 0) return `${years} year${years > 1 ? 's' : ''}`;
+    return `${years} year${years > 1 ? 's' : ''} ${months} month${months > 1 ? 's' : ''}`;
+  };
+  const calculateTotalExperience = (experiences) => {
+    let totalMonths = 0;
+    
+    experiences.forEach(exp => {
+      const { years, months } = calculateExperience(exp.fromDate, exp.toDate);
+      totalMonths += (years * 12) + months;
+    });
+    
+    const totalYears = Math.floor(totalMonths / 12);
+    const remainingMonths = totalMonths % 12;
+    
+    return { years: totalYears, months: remainingMonths };
+  };
   const ApplicationCard = ({ application }) => {
     const statusConfig = getStatusConfig(application.status);
     
@@ -260,6 +321,10 @@ const FacultyAdminDashboard = () => {
               <Calendar className="h-4 w-4" />
               <span>{application.age} years old</span>
             </div>
+            <div className="flex items-center space-x-2">
+              <UserIcon className="h-4 w-4" />
+              <span>{application.gender}</span>
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-gray-100">
@@ -312,6 +377,10 @@ const FacultyAdminDashboard = () => {
                     {application.status || 'Pending'}
                   </span>
                   <span className="text-sm text-gray-500">Age: {application.age}</span>
+                  <div className="flex items-center space-x-2">
+              <UserIcon className="text-sm text-gray-500 h-4 w-4" />
+              <span className="text-sm text-gray-500">{application.gender}</span>
+            </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -366,60 +435,104 @@ const FacultyAdminDashboard = () => {
                 
                 {/* B.Tech */}
                 <div className="bg-white/50 rounded-lg p-4">
-                  <h5 className="font-medium text-gray-900 mb-2">B.Tech</h5>
+                  <h5 className="font-medium text-gray-900 mb-2">{application.ugCourse}</h5>
                   <div className="text-sm">
-                    <div><span className="font-medium">CGPA:</span> {application.btechCGPA || 'N/A'}</div>
+                    <div><span className="font-medium">College / University:</span> {application.ugCollegeName || 'N/A'}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div><span className="font-medium">Branch:</span> {application.ugBranch || 'N/A'}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div><span className="font-medium">Place:</span> {application.ugPlace || 'N/A'}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div><span className="font-medium">Timeline:</span> {application.ugTimeline || 'N/A'}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div><span className="font-medium">CGPA:</span> {application.ugCgpa || 'N/A'}</div>
                   </div>
                 </div>
                 
                 {/* M.Tech */}
-                {(application.mtechDesignation || application.mtechYearOfJoining || application.mtechYearOfGraduation) && (
-                  <div className="bg-white/50 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-2">M.Tech</h5>
-                    <div className="text-sm space-y-1">
-                      <div><span className="font-medium">Designation:</span> {application.mtechDesignation || 'N/A'}</div>
-                      <div><span className="font-medium">Joining:</span> {application.mtechYearOfJoining || 'N/A'}</div>
-                      <div><span className="font-medium">Graduation:</span> {application.mtechYearOfGraduation || 'N/A'}</div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Other PG */}
-                {application.otherPGDegree && (
-                  <div className="bg-white/50 rounded-lg p-4 md:col-span-2">
-                    <h5 className="font-medium text-gray-900 mb-2">Other Postgraduate ({application.otherPGDegree})</h5>
-                    <div className="text-sm space-y-1">
-                      <div><span className="font-medium">Designation:</span> {application.otherPGDesignation || 'N/A'}</div>
-                      <div><span className="font-medium">Joining:</span> {application.otherPGYearOfJoining || 'N/A'}</div>
-                      <div><span className="font-medium">Passing:</span> {application.otherPGYearOfPassing || 'N/A'}</div>
-                    </div>
-                  </div>
-                )}
+                {(application.mtechDesignation || application.mtechYearOfJoining || application.mtechYearOfGraduation || application.mtechCollege || application.mtechCgpa) && (
+  <div className="bg-white/50 rounded-lg p-4">
+    <h5 className="font-medium text-gray-900 mb-2">M.Tech</h5>
+    <div className="text-sm space-y-1">
+      <div><span className="font-medium">College:</span> {application.mtechCollege || 'N/A'}</div>
+      <div><span className="font-medium">Designation:</span> {application.mtechDesignation || 'N/A'}</div>
+      <div><span className="font-medium">Joining:</span> {application.mtechYearOfJoining || 'N/A'}</div>
+      <div><span className="font-medium">Graduation:</span> {application.mtechYearOfGraduation || 'N/A'}</div>
+      <div><span className="font-medium">CGPA:</span> {application.mtechCgpa || 'N/A'}</div>
+    </div>
+  </div>
+)}
+
+{/* Other PG */}
+{(application.otherPGDegree || application.otherpgcollege || application.otherPGDesignation || application.otherPGYearOfJoining || application.otherPGYearOfPassing || application.otherPGCgpa) && (
+  <div className="bg-white/50 rounded-lg p-4 md:col-span-2">
+    <h5 className="font-medium text-gray-900 mb-2">Other Postgraduate {application.otherPGDegree && `(${application.otherPGDegree})`}</h5>
+    <div className="text-sm space-y-1">
+      <div><span className="font-medium">College:</span> {application.otherpgcollege || 'N/A'}</div>
+      <div><span className="font-medium">Degree:</span> {application.otherPGDegree || 'N/A'}</div>
+      <div><span className="font-medium">Designation:</span> {application.otherPGDesignation || 'N/A'}</div>
+      <div><span className="font-medium">Joining:</span> {application.otherPGYearOfJoining || 'N/A'}</div>
+      <div><span className="font-medium">Passing:</span> {application.otherPGYearOfPassing || 'N/A'}</div>
+      <div><span className="font-medium">CGPA:</span> {application.otherPGCgpa || 'N/A'}</div>
+    </div>
+  </div>
+)}  
               </div>
             </div>
 
             {/* Experience Section */}
             {application.hasExperience && application.experiences && application.experiences.length > 0 && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-                <h4 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Briefcase className="mr-2 text-blue-600" size={24} />
-                  Experience
-                </h4>
-                <div className="space-y-4">
-                  {application.experiences.map((exp, index) => (
-                    <div key={exp.id || index} className="bg-white/50 rounded-lg p-4">
-                      <h5 className="font-medium text-gray-900 mb-2">{exp.designation || 'N/A'}</h5>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div><span className="font-medium">Institution:</span> {exp.institution || 'N/A'}</div>
-                        <div><span className="font-medium">Place:</span> {exp.place || 'N/A'}</div>
-                        <div><span className="font-medium">From:</span> {exp.fromDate || 'N/A'}</div>
-                        <div><span className="font-medium">To:</span> {exp.toDate || 'N/A'}</div>
-                      </div>
-                    </div>
-                  ))}
+    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xl font-semibold text-gray-900 flex items-center">
+          <Briefcase className="mr-2 text-blue-600" size={24} />
+          Experience
+        </h4>
+        <div className="flex items-center bg-blue-100 px-3 py-1 rounded-full">
+          <Clock className="mr-1 text-blue-600" size={16} />
+          <span className="text-sm font-medium text-blue-800">
+          Total: {(() => {
+            const totalExp = calculateTotalExperience(application.experiences);
+            return formatExperience(totalExp.years, totalExp.months);
+          })()}
+          </span>
+        </div>
+      </div>
+      
+      <div className="space-y-4">
+        {application.experiences.map((exp, index) => {
+          const expDuration = calculateExperience(exp.fromDate, exp.toDate);
+          
+          return (
+            <div key={exp.id || index} className="bg-white/50 rounded-lg p-4">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-1">
+                    Experience {index + 1} - {exp.experiencetype}
+                  </h5>
+                  <h5 className="font-medium text-gray-900">{exp.designation || 'N/A'}</h5>
                 </div>
+                <span className="text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                  {formatExperience(expDuration.years, expDuration.months)}
+                </span>
               </div>
-            )}
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div><span className="font-medium">Institution:</span> {exp.institution || 'N/A'}</div>
+                <div><span className="font-medium">Place:</span> {exp.place || 'N/A'}</div>
+                <div><span className="font-medium">From:</span> {exp.fromDate || 'N/A'}</div>
+                <div><span className="font-medium">To:</span> {exp.toDate || 'N/A'}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  )}
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-6 border-t">
@@ -595,8 +708,8 @@ const FacultyAdminDashboard = () => {
                     onChange={(e) => handleFilterChange('type', e.target.value)}
                   >
                     <option value="">All Types</option>
-                    <option value="technical">Technical</option>
-                    <option value="non_technical">Non-Technical</option>
+                    <option value="teaching">Teaching</option>
+                    <option value="non_teaching">Non-Teaching</option>
                   </select>
                 </div>
               </div>

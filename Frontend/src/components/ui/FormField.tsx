@@ -15,6 +15,7 @@ interface FormFieldProps {
   options?: Array<{ value: string, label: string }>;
   className?: string;
   disabled?: boolean;
+
 }
 
 export const FormField: React.FC<FormFieldProps> = ({ 
@@ -29,7 +30,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   max,
   options,
   className = '',
-  disabled = false
+  disabled = false,
+
 }) => {
   const { register, formState: { errors } } = useFormContext();
   
@@ -84,21 +86,23 @@ export const FormField: React.FC<FormFieldProps> = ({
           />
         );
         
-      case 'select':
-        return (
-          <select 
-            id={id}
-            {...register(name, registerOptions)} 
-            className={inputClasses}
-          >
-            <option value="">Select {label}</option>
-            {options?.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        );
+        case 'select':
+          return (
+            <select 
+              id={id}
+              {...register(name, registerOptions)} 
+              className={inputClasses}
+        // ✅ And this
+            >
+              <option value="">Select {label}</option>
+              {options?.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          );
+        
         
       case 'radio':
         return (

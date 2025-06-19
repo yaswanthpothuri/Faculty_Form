@@ -21,12 +21,12 @@ type FormData = {
   email: string;
   phone: string;
   position: string;
+  branch: string;
   applicationType: string;
   profilePicture: File | null;
   profilePicturePreview: string;
   resume: File | null;
   
-  btechCGPA: string;
   tenthSchoolName: string;
   tenthPlace: string;
   tenthTimeline: string;
@@ -35,17 +35,28 @@ type FormData = {
   interPlace: string;
   interTimeline: string;
   interPercentage: string;
+  ugCourse: String;
+  ugBranch: String;
+  ugCollegeName: String;
+  ugPlace: String;
+  ugTimeline: String;
+  ugCgpa: String;
 
+  mtechCollege: string;
   mtechYearOfJoining: string;
   mtechYearOfGraduation: string;
   mtechDesignation: string;
+  mtechCgpa: string;
+  otherpgcollege: string;
   otherPGDegree: string;
   otherPGYearOfJoining: string;
   otherPGYearOfPassing: string;
   otherPGDesignation: string;
+  otherPGCgpa: string;
 
   hasExperience: boolean;
   experiences: Array<{
+    experiencetype: string;
     designation: string;
     institution: string;
     place: string;
@@ -68,12 +79,12 @@ export const FacultyApplicationForm: React.FC = () => {
       email: '',
       phone: '',
       position: '',
+      branch: '',
       applicationType: '',
       profilePicture: null,
       profilePicturePreview: '',
       resume: null,
 
-      btechCGPA: '',
       tenthSchoolName: '',
       tenthPlace: '',
       tenthTimeline: '',
@@ -82,17 +93,28 @@ export const FacultyApplicationForm: React.FC = () => {
       interPlace: '',
       interTimeline: '',
       interPercentage: '',
+      ugCourse: '',
+      ugBranch: '',
+      ugCollegeName: '',
+      ugPlace: '',
+      ugTimeline: '',
+      ugCgpa: '',
 
+      mtechCollege:'',
       mtechYearOfJoining: '',
       mtechYearOfGraduation: '',
       mtechDesignation: '',
+      mtechCgpa:'',
+      otherpgcollege:'',
       otherPGDegree: '',
       otherPGYearOfJoining: '',
       otherPGYearOfPassing: '',
       otherPGDesignation: '',
+      otherPGCgpa:'',
 
       hasExperience: false,
       experiences: [{
+        experiencetype: '',
         designation: '',
         institution: '',
         place: '',

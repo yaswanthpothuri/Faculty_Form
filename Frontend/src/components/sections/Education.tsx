@@ -4,21 +4,6 @@ import { FormField } from '../ui/FormField';
 export const Education: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">B.Tech Details</h3>
-        <div className="mt-4">
-          <FormField
-            name="btechCGPA"
-            label="B.Tech CGPA"
-            type="number"
-            placeholder="Enter your CGPA (e.g., 8.5)"
-            required
-            min={0}
-            max={10}
-            // step={0.01}
-          />
-        </div>
-      </div>
       
       <div className="pt-2">
         <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">10th Standard Details</h3>
@@ -111,6 +96,77 @@ export const Education: React.FC = () => {
           </div>
         </div>
       </div>
+      <div className="pt-2">
+  <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Under Graduation Details</h3>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+
+    <div>
+      <FormField
+        name="ugCourse"
+        label="Course/Degree"
+        placeholder="e.g., B.Tech, BBA, B.Com, B.Sc"
+        required
+      />
+    </div>
+
+    <div>
+      <FormField
+        name="ugBranch"
+        label="Branch/Specialization"
+        placeholder="e.g., Computer Science, Electronics, Finance"
+        required
+      />
+    </div>
+
+    <div className="md:col-span-2">
+      <FormField
+        name="ugCollegeName"
+        label="College/University Name"
+        placeholder="Enter your college/university name"
+        required
+      />
+    </div>
+
+    <div>
+      <FormField
+        name="ugPlace"
+        label="Place/Location"
+        placeholder="Enter college location"
+        required
+      />
+    </div>
+    
+    {/* Timeline */}
+    <div>
+      <FormField
+        name="ugTimeline"
+        label="Timeline"
+        placeholder="e.g., 2018-2022"
+        required
+        pattern={/^\d{4}-\d{4}$/}
+        patternMessage="Please use format YYYY-YYYY"
+      />
+    </div>
+    
+    
+    {/* CGPA Field */}
+    <div>
+      <FormField
+        name="ugCgpa"
+        label="CGPA"
+        type="number"
+        placeholder="Enter CGPA (e.g., 8.5)"
+        required
+        min={0}
+        max={10}
+        step={0.01}
+      />
+      <p className="text-xs text-gray-500 mt-1">Out of 10</p>
+    </div>
+
+    
+  </div>
+</div>
     </div>
   );
 };

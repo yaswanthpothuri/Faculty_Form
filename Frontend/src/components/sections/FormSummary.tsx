@@ -37,7 +37,6 @@ export const FormSummary: React.FC = () => {
         </SummarySection>
         
         <SummarySection title="Education">
-          <SummaryItem label="B.Tech CGPA" value={formData.btechCGPA} />
           
           <div className="mt-2">
             <h4 className="text-sm font-medium text-gray-500">10th Standard Details</h4>
@@ -58,19 +57,29 @@ export const FormSummary: React.FC = () => {
               <SummaryItem label="Percentage" value={`${formData.interPercentage}%`} />
             </div>
           </div>
+          <div className="mt-2">
+            <h4 className="text-sm font-medium text-gray-500">Under Graduation Details</h4>
+            <div className="mt-1 pl-4 border-l-2 border-gray-200">
+              <SummaryItem label="UG Course" value={formData.ugCourse} />
+              <SummaryItem label="UG Branch" value={formData.ugBranch} />
+              <SummaryItem label="UG College Name" value={formData.ugCollegeName} />
+              <SummaryItem label="UG Place/Location" value={formData.ugPlace} />
+              <SummaryItem label="UG CGPA" value={formData.ugCgpa} />
+            </div>
+          </div>
         </SummarySection>
         
         <SummarySection title="Postgraduate Information">
-          <div className="mt-2">
-            <h4 className="text-sm font-medium text-gray-500">M.Tech Details</h4>
-            <div className="mt-1 pl-4 border-l-2 border-gray-200">
-              <SummaryItem label="Year of Joining" value={formData.mtechYearOfJoining} />
-              <SummaryItem label="Year of Graduation" value={formData.mtechYearOfGraduation} />
-              <SummaryItem label="Designation" value={formData.mtechDesignation} />
+          {formData.mtechCollege !== '' ? (
+            <div className="mt-2">
+              <h4 className="text-sm font-medium text-gray-500">M.Tech Details</h4>
+              <div className="mt-1 pl-4 border-l-2 border-gray-200">
+                <SummaryItem label="Year of Joining" value={formData.mtechYearOfJoining} />
+                <SummaryItem label="Year of Graduation" value={formData.mtechYearOfGraduation} />
+                <SummaryItem label="Designation" value={formData.mtechDesignation} />
+              </div>
             </div>
-          </div>
-          
-          {formData.otherPGDegree && (
+          ) : formData.otherPGDegree !== '' ? (
             <div className="mt-2">
               <h4 className="text-sm font-medium text-gray-500">Other PG Degree</h4>
               <div className="mt-1 pl-4 border-l-2 border-gray-200">
@@ -80,7 +89,10 @@ export const FormSummary: React.FC = () => {
                 <SummaryItem label="Designation" value={formData.otherPGDesignation} />
               </div>
             </div>
+          ) : (
+            <p>No details provided.</p>
           )}
+          
         </SummarySection>
         
         <SummarySection title="Academic Experience">

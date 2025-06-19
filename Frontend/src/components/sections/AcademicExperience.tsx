@@ -3,6 +3,12 @@ import { useFormContext, useFieldArray } from 'react-hook-form';
 import { FormField } from '../ui/FormField';
 import { Plus, Trash2 } from 'lucide-react';
 
+const experienceTypes = [
+  { value: 'Academic', label: 'Academic Experience' },
+  { value: 'Industrial', label: 'Industrial Experience' },
+  { value: 'Research', label: 'Research Experience' }
+];
+
 export const AcademicExperience: React.FC = () => {
   const { control, watch } = useFormContext();
   const hasExperience = watch('hasExperience');
@@ -14,7 +20,7 @@ export const AcademicExperience: React.FC = () => {
   
   return (
     <div className="space-y-6 animate-fadeIn">
-      <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Academic Experience</h3>
+      <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">Professional Experience</h3>
       
       <div>
         <FormField
@@ -46,9 +52,20 @@ export const AcademicExperience: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <FormField
+                    name={`experiences.${index}.experiencetype`}
+                    label="Type of Experience"
+                    type="select"
+                    options={experienceTypes}
+                    placeholder="Select experience type"
+                    required={hasExperience}
+                  />
+                </div>
+                
+                <div className="md:col-span-2">
+                  <FormField
                     name={`experiences.${index}.designation`}
                     label="Designation"
-                    placeholder="e.g., Assistant Professor"
+                    placeholder="e.g., Assistant Professor, Software Engineer, Research Associate"
                     required={hasExperience}
                   />
                 </div>
@@ -57,7 +74,7 @@ export const AcademicExperience: React.FC = () => {
                   <FormField
                     name={`experiences.${index}.institution`}
                     label="Institution/Organization Name"
-                    placeholder="Enter the name of the institution"
+                    placeholder="Enter the name of the institution/company"
                     required={hasExperience}
                   />
                 </div>
@@ -98,6 +115,7 @@ export const AcademicExperience: React.FC = () => {
             <button
               type="button"
               onClick={() => append({ 
+                experiencetype: '',
                 designation: '', 
                 institution: '', 
                 place: '', 

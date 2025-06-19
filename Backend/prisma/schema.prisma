@@ -19,12 +19,12 @@ model FacultyApplication {
   phone               String
   position            String
   applicationType     String
+  branch              String
 
-  profilePictureKey   String?     
-  resumeKey           String?     
+  profilePictureKey   String     
+  resumeKey           String     
 
   // Education
-  btechCGPA           String
   tenthSchoolName     String
   tenthPlace          String
   tenthTimeline       String
@@ -33,15 +33,25 @@ model FacultyApplication {
   interPlace          String
   interTimeline       String
   interPercentage     String
+  ugCourse String
+  ugBranch String
+  ugCollegeName String
+  ugPlace String
+  ugTimeline String
+  ugCgpa String
 
   // Postgraduate Information
-  mtechYearOfJoining      String
-  mtechYearOfGraduation   String
-  mtechDesignation        String
-  otherPGDegree           String
-  otherPGYearOfJoining    String
-  otherPGYearOfPassing    String
-  otherPGDesignation      String
+  mtechCollege            String?
+  mtechYearOfJoining      String?
+  mtechYearOfGraduation   String?
+  mtechDesignation        String?
+  mtechCgpa               String?
+  otherpgcollege          String?
+  otherPGDegree           String?
+  otherPGYearOfJoining    String?
+  otherPGYearOfPassing    String?
+  otherPGDesignation      String?
+  otherPGCgpa             String?
 
   // Experience
   hasExperience       Boolean
@@ -54,6 +64,7 @@ model FacultyApplication {
 
 model Experience {
   id            String             @id @default(cuid())
+  experiencetype  String
   designation   String
   institution   String
   place         String
